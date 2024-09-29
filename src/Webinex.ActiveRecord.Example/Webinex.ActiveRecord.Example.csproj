@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="HotChocolate.AspNetCore" Version="13.9.4" />
+        <PackageReference Include="MediatR" Version="12.4.1" />
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.8"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.8"/>
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Webinex.ActiveRecord.AspNetCore\Webinex.ActiveRecord.AspNetCore.csproj"/>
+        <ProjectReference Include="..\Webinex.ActiveRecord.EntityFramework\Webinex.ActiveRecord.EntityFramework.csproj" />
+        <ProjectReference Include="..\Webinex.ActiveRecord.HotChocolate\Webinex.ActiveRecord.HotChocolate.csproj" />
+    </ItemGroup>
+
+</Project>

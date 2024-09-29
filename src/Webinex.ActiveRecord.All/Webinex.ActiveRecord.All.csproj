@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <Import Project="$(MSBuildThisFileDirectory)/Package.props" />
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Webinex.ActiveRecord.Abstractions\Webinex.ActiveRecord.Abstractions.csproj" />
+      <ProjectReference Include="..\Webinex.ActiveRecord.Annotations\Webinex.ActiveRecord.Annotations.csproj" />
+      <ProjectReference Include="..\Webinex.ActiveRecord.AspNetCore\Webinex.ActiveRecord.AspNetCore.csproj" />
+      <ProjectReference Include="..\Webinex.ActiveRecord.EntityFramework\Webinex.ActiveRecord.EntityFramework.csproj" />
+      <ProjectReference Include="..\Webinex.ActiveRecord.HotChocolate\Webinex.ActiveRecord.HotChocolate.csproj" />
+      <ProjectReference Include="..\Webinex.ActiveRecord\Webinex.ActiveRecord.csproj" />
+    </ItemGroup>
+
+</Project>

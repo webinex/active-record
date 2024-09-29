@@ -1,0 +1,15 @@
+<Project>
+    <PropertyGroup>
+        <Title>Webinex Active Record</Title>
+        <PackageVersion>0.0.1-build3</PackageVersion>
+        <Authors>Webinex Dev</Authors>
+        <NoWarn>$(NoWarn);CS1591</NoWarn>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <Description>Active record pattern implementation for aspnetcore</Description>
+        <Copyright>Webinex Dev</Copyright>
+        <PackageProjectUrl>https://github.com/webinex/active-record</PackageProjectUrl>
+        <License>https://github.com/webinex/active-record/LICENSE</License>
+        <RepositoryUrl>https://github.com/webinex/active-record</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+    </PropertyGroup>
+</Project>

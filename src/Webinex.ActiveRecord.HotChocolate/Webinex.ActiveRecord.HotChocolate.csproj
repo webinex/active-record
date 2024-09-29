@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <Import Project="$(MSBuildThisFileDirectory)/../Webinex.ActiveRecord.All/Package.props" />
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Webinex.ActiveRecord.AspNetCore\Webinex.ActiveRecord.AspNetCore.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="HotChocolate" Version="13.9.4" />
+      <PackageReference Include="HotChocolate.Data.EntityFramework" Version="13.9.4" />
+    </ItemGroup>
+</Project>
