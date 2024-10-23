@@ -1,20 +1,26 @@
+using System.Text.Json.Serialization;
 using Webinex.ActiveRecord;
 using Webinex.ActiveRecord.Annotations;
 using Webinex.ActiveRecord.AspNetCore;
 using Webinex.ActiveRecord.Example;
 using Webinex.ActiveRecord.Example.Types;
 using Webinex.ActiveRecord.HotChocolate;
+using Webinex.Asky;
 using BindingBehavior = Webinex.ActiveRecord.BindingBehavior;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
+    .AddControllers()
+    .AddJsonOptions(x => x.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()))
+    .Services
     .AddEndpointsApiExplorer()
     .AddSwaggerGen()
     .AddMediatR(x => x.RegisterServicesFromAssembly(typeof(Program).Assembly))
     .AddSingleton<IClock, Clock>()
     .AddSingleton<IAuth, Auth>()
-    .AddDbContext<AppDbContext>();
+    .AddDbContext<AppDbContext>()
+    .AddSingleton<IAskyFieldMap<Client>, ClientFieldMap>();
 
 builder.Services
     .AddActiveRecordService(o => o
@@ -26,7 +32,10 @@ builder.Services
 builder.Services
     .AddGraphQLServer()
     .AddQueryType()
-    .AddActiveRecordTypes();
+    .AddActiveRecordTypes()
+    .AddDiagnosticEventListener<GraphQLExceptionLogger.Execution>()
+    .AddDiagnosticEventListener<GraphQLExceptionLogger.Server>()
+    .AddDiagnosticEventListener<GraphQLExceptionLogger.DataLoader>();
 
 var app = builder.Build();
 

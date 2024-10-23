@@ -4,16 +4,8 @@ namespace Webinex.ActiveRecord;
 
 public interface IActiveRecordRepository<T>
 {
-    Task<IQueryable<T>> QueryableAsync(
-        FilterRule? filterRule = null,
-        IReadOnlyCollection<SortRule>? sortRules = null,
-        PagingRule? pagingRule = null);
-
-    Task<IReadOnlyCollection<T>> QueryAsync(
-        FilterRule? filterRule = null,
-        IReadOnlyCollection<SortRule>? sortRules = null,
-        PagingRule? pagingRule = null);
-
+    Task<IQueryable<T>> QueryableAsync(ActiveRecordQuery? query);
+    Task<IReadOnlyCollection<T>> QueryAsync(ActiveRecordQuery? query = null);
     Task<int> CountAsync(FilterRule? filterRule);
 
     Task<IReadOnlyCollection<T>> ByKeysAsync<TKey>(IEnumerable<TKey> keys)

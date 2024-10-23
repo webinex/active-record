@@ -31,70 +31,57 @@ internal class ActiveRecordRepository<T> : IActiveRecordRepository<T>, IActiveRe
         _fieldMap ??
         throw new InvalidOperationException($"Field map for type {typeof(T).Name} not found in DI container.");
 
-    Task<IQueryable<T>> IActiveRecordRepository<T>.QueryableAsync(
-        FilterRule? filterRule,
-        IReadOnlyCollection<SortRule>? sortRules,
-        PagingRule? pagingRule)
+    Task<IQueryable<T>> IActiveRecordRepository<T>.QueryableAsync(ActiveRecordQuery? query)
     {
-        return QueryableAsync(defaultPredicate: null, filterRule, sortRules, pagingRule);
+        return QueryableAsync(defaultPredicate: null, query);
     }
 
-    async Task<IQueryable<T>> IActiveRecordServiceRepository<T>.QueryableAsync(
-        FilterRule? filterRule,
-        IReadOnlyCollection<SortRule>? sortRules,
-        PagingRule? pagingRule)
+    async Task<IQueryable<T>> IActiveRecordServiceRepository<T>.QueryableAsync(ActiveRecordQuery? query)
     {
         var context = new ActionContext<T>(ActionType.GetAll, _settings.Definition, null, null, null);
         var defaultPredicate = await _authorizationService.ExpressionAsync(context);
-        return await QueryableAsync(defaultPredicate, filterRule, sortRules, pagingRule);
+        return await QueryableAsync(defaultPredicate, query);
     }
 
-    async Task<IReadOnlyCollection<T>> IActiveRecordRepository<T>.QueryAsync(
-        FilterRule? filterRule,
-        IReadOnlyCollection<SortRule>? sortRules,
-        PagingRule? pagingRule)
+    async Task<IReadOnlyCollection<T>> IActiveRecordRepository<T>.QueryAsync(ActiveRecordQuery? query)
     {
-        var queryable = await QueryableAsync(defaultPredicate: null, filterRule, sortRules, pagingRule);
+        var queryable = await QueryableAsync(defaultPredicate: null, query);
         return await queryable.ToArrayAsync();
     }
 
-    async Task<IReadOnlyCollection<T>> IActiveRecordServiceRepository<T>.QueryAsync(
-        FilterRule? filterRule,
-        IReadOnlyCollection<SortRule>? sortRules,
-        PagingRule? pagingRule)
+    async Task<IReadOnlyCollection<T>> IActiveRecordServiceRepository<T>.QueryAsync(ActiveRecordQuery? query)
     {
         var context = new ActionContext<T>(ActionType.GetAll, _settings.Definition, null, null, null);
         var defaultPredicate = await _authorizationService.ExpressionAsync(context);
-        var queryable = await QueryableAsync(defaultPredicate, filterRule, sortRules, pagingRule);
+        var queryable = await QueryableAsync(defaultPredicate, query);
         return await queryable.ToArrayAsync();
     }
 
     private Task<IQueryable<T>> QueryableAsync(
         Expression<Func<T, bool>>? defaultPredicate,
-        FilterRule? filterRule = null,
-        IReadOnlyCollection<SortRule>? sortRules = null,
-        PagingRule? pagingRule = null)
+        ActiveRecordQuery? query)
     {
         var queryable = DbContext.Set<T>().AsQueryable();
 
         if (defaultPredicate != null)
             queryable = queryable.Where(defaultPredicate);
 
-        if (filterRule != null)
-            queryable = queryable.Where(FieldMap, filterRule);
+        if (query?.FilterRule != null)
+            queryable = queryable.Where(FieldMap, query.FilterRule);
 
-        if (sortRules != null)
-            queryable = queryable.SortBy(FieldMap, sortRules);
+        if (query?.SortRules != null)
+            queryable = queryable.SortBy(FieldMap, query.SortRules);
 
-        if (pagingRule != null)
-            queryable = queryable.PageBy(pagingRule);
+        if (query?.PagingRule != null)
+            queryable = queryable.PageBy(query.PagingRule);
 
         return Task.FromResult(queryable);
     }
 
     async Task<int> IActiveRecordRepository<T>.CountAsync(FilterRule? filterRule)
     {
-        var queryable = await QueryableAsync(defaultPredicate: null, filterRule: filterRule);
+        var query = new ActiveRecordQuery(filterRule: filterRule);
+        var queryable = await QueryableAsync(defaultPredicate: null, query: query);
         return await queryable.CountAsync();
     }
 

@@ -21,6 +21,7 @@ public static class ActiveRecordHotChocolateExtensions
         builder.AddTypeExtension(typeof(QueryObjectTypeExtension));
         builder.Services.AddScoped(typeof(ActiveRecordBatchDataLoader<>));
         builder.Services.TryAddSingleton<IActiveRecordGraphQLDataLock, NoLockActiveRecordGraphQLDataLock>();
+        builder.Services.TryAddSingleton(typeof(ActiveRecordQueryDeserializer<>), typeof(ActiveRecordQueryDeserializer<>));
 
         var configuration = (ActiveRecordServiceConfiguration?)builder.Services
             .FirstOrDefault(x => x.ServiceType == typeof(ActiveRecordServiceConfiguration))?.ImplementationInstance;
@@ -72,7 +73,10 @@ public static class ActiveRecordHotChocolateExtensions
                     async ctx =>
                     {
                         var service = ctx.Service<IActiveRecordService<TType>>();
-                        return await service.QueryAsync();
+                        var queryDeserializer = ctx.Service<ActiveRecordQueryDeserializer<TType>>();
+                        var queryArg = ctx.ArgumentOptional<string>("query");
+                        var query = queryArg.HasValue ? await queryDeserializer.DeserializeAsync(queryArg.Value) : null;
+                        return await service.QueryAsync(query);
                     });
 
             descriptor

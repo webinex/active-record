@@ -1,19 +1,9 @@
-﻿using Webinex.Asky;
-
-namespace Webinex.ActiveRecord;
+﻿namespace Webinex.ActiveRecord;
 
 public interface IActiveRecordServiceRepository<T>
 {
-    Task<IQueryable<T>> QueryableAsync(
-        FilterRule? filterRule = null,
-        IReadOnlyCollection<SortRule>? sortRules = null,
-        PagingRule? pagingRule = null);
-
-    Task<IReadOnlyCollection<T>> QueryAsync(
-        FilterRule? filterRule = null,
-        IReadOnlyCollection<SortRule>? sortRules = null,
-        PagingRule? pagingRule = null);
-
+    Task<IQueryable<T>> QueryableAsync(ActiveRecordQuery? query = null);
+    Task<IReadOnlyCollection<T>> QueryAsync(ActiveRecordQuery? query = null);
     Task<IReadOnlyCollection<T>> ByKeysAsync<TKey>(IEnumerable<TKey> keys)
         where TKey : notnull;
 

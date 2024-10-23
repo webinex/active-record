@@ -7,7 +7,7 @@ namespace Webinex.ActiveRecord;
 
 public interface IActiveRecordService<TType>
 {
-    Task<IQueryable<TType>> QueryAsync();
+    Task<IQueryable<TType>> QueryAsync(ActiveRecordQuery? query = null);
     Task<TType?> ByKeyAsync(object key);
 
     Task<object?> InvokeAsync(
@@ -38,9 +38,9 @@ internal class ActiveRecordService<TType> : IActiveRecordService<TType>
         _authorizationService = authorizationService;
     }
 
-    public async Task<IQueryable<TType>> QueryAsync()
+    public async Task<IQueryable<TType>> QueryAsync(ActiveRecordQuery? query = null)
     {
-        var result = await _repository.QueryableAsync();
+        var result = await _repository.QueryableAsync(query);
         return result;
     }
 
