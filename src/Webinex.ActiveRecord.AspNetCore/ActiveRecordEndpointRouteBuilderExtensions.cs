@@ -2,12 +2,15 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Options;
+using Webinex.Asky;
 
 namespace Webinex.ActiveRecord.AspNetCore;
 
 public static class ActiveRecordEndpointRouteBuilderExtensions
 {
-    public static IEndpointRouteBuilder MapActiveRecords(this IEndpointRouteBuilder endpoints, Action<ActiveRecordServiceRouteConfiguration> configure)
+    public static IEndpointRouteBuilder MapActiveRecords(this IEndpointRouteBuilder endpoints,
+        Action<ActiveRecordServiceRouteConfiguration> configure)
     {
         var configuration = new ActiveRecordServiceRouteConfiguration(endpoints.ServiceProvider);
         configure(configuration);
@@ -24,7 +27,8 @@ public static class ActiveRecordEndpointRouteBuilderExtensions
         this IEndpointRouteBuilder endpoints,
         ActiveRecordRouteConfiguration routeConfiguration)
     {
-        var mapType = typeof(Map<,>).MakeGenericType(routeConfiguration.Type, routeConfiguration.Definition.Key.PropertyType);
+        var mapType =
+            typeof(Map<,>).MakeGenericType(routeConfiguration.Type, routeConfiguration.Definition.Key.PropertyType);
         var map = (IMap)Activator.CreateInstance(mapType, endpoints, routeConfiguration)!;
         return map.Bind();
     }
@@ -54,8 +58,16 @@ public static class ActiveRecordEndpointRouteBuilderExtensions
             ConfigureRoute(
                 _endpoints.MapGet(
                         basePath,
-                        async ([FromServices] IActiveRecordService<TType> service) =>
-                        await service.QueryAsync())
+                        async (
+                            [FromServices] IActiveRecordService<TType> service,
+                            [FromServices] IOptions<JsonOptions> jsonOptions,
+                            [FromQuery] string? query,
+                            [FromServices] IAskyFieldMap<TType>? fieldMap = null) =>
+                        {
+                            var deserializer = new ActiveRecordQueryDeserializer<TType>(fieldMap, jsonOptions);
+                            var queryObject = query != null ? await deserializer.DeserializeAsync(query) : null;
+                            return await service.QueryAsync(queryObject);
+                        })
                     .WithName($"GetAll{name}")
                     .WithTags(name));
 

@@ -40,6 +40,19 @@ public class Client : IAggregateRoot
         };
     }
 
+    internal static Client NewDefault(string firstName, string lastName)
+    {
+        return new Client
+        {
+            Id = Guid.NewGuid(),
+            CreatedById = Guid.NewGuid(),
+            LastModifiedById = Guid.NewGuid(),
+            FirstName = firstName,
+            LastName = lastName,
+            Active = true,
+        };
+    }
+
     [Action]
     public void Update(IAuth auth, [Body] UpdateInput input)
     {

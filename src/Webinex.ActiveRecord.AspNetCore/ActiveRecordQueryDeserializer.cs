@@ -3,14 +3,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Webinex.Asky;
 
-namespace Webinex.ActiveRecord.HotChocolate;
+namespace Webinex.ActiveRecord.AspNetCore;
 
 internal class ActiveRecordQueryDeserializer<T>
 {
     private readonly IAskyFieldMap<T>? _fieldMap;
     private readonly IOptions<JsonOptions> _jsonOptions;
 
-    public ActiveRecordQueryDeserializer(IOptions<JsonOptions> jsonOptions, IAskyFieldMap<T>? fieldMap = null)
+    public ActiveRecordQueryDeserializer(IAskyFieldMap<T>? fieldMap, IOptions<JsonOptions> jsonOptions)
     {
         _fieldMap = fieldMap;
         _jsonOptions = jsonOptions;

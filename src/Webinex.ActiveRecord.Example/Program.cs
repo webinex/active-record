@@ -32,6 +32,7 @@ builder.Services
 builder.Services
     .AddGraphQLServer()
     .AddQueryType()
+    .AddProjections()
     .AddActiveRecordTypes()
     .AddDiagnosticEventListener<GraphQLExceptionLogger.Execution>()
     .AddDiagnosticEventListener<GraphQLExceptionLogger.Server>()
@@ -45,6 +46,14 @@ using (var scope = app.Services.CreateScope())
     var dbContext = sp.GetRequiredService<AppDbContext>();
     dbContext.Database.EnsureDeleted();
     dbContext.Database.EnsureCreated();
+    
+    dbContext.Set<Client>().AddRange([
+        Client.NewDefault("James", "Doe"),
+        Client.NewDefault("Diego", "Alves"),
+        Client.NewDefault("Jane", "Doe"),
+    ]);
+
+    dbContext.SaveChanges();
 }
 
 app
