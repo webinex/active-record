@@ -40,7 +40,8 @@ internal class ActiveRecordRepository<T> : IActiveRecordRepository<T>, IActiveRe
     {
         var context = new ActionContext<T>(ActionType.GetAll, _settings.Definition, null, null, null);
         var defaultPredicate = await _authorizationService.ExpressionAsync(context);
-        return await QueryableAsync(defaultPredicate, query);
+        var queryable = await QueryableAsync(defaultPredicate, query);
+        return queryable.AsNoTracking();
     }
 
     async Task<IReadOnlyCollection<T>> IActiveRecordRepository<T>.QueryAsync(ActiveRecordQuery? query)
@@ -54,7 +55,7 @@ internal class ActiveRecordRepository<T> : IActiveRecordRepository<T>, IActiveRe
         var context = new ActionContext<T>(ActionType.GetAll, _settings.Definition, null, null, null);
         var defaultPredicate = await _authorizationService.ExpressionAsync(context);
         var queryable = await QueryableAsync(defaultPredicate, query);
-        return await queryable.ToArrayAsync();
+        return await queryable.AsNoTracking().ToArrayAsync();
     }
 
     private Task<IQueryable<T>> QueryableAsync(
