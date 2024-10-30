@@ -54,7 +54,6 @@ internal class ActiveRecordQueryObjectTypeExtension : ObjectTypeExtension
                     var service = ctx.Service<IActiveRecordService<TType>>();
                     return await service.ByKeyAsync(
                         ctx.ArgumentValue<object>(settings.Definition.Key.Name.Camelize()));
-                })
-            .UseProjection<TType>();
+                });
     }
 }

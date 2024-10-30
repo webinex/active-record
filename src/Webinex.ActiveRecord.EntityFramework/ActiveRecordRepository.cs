@@ -101,7 +101,8 @@ internal class ActiveRecordRepository<T> : IActiveRecordRepository<T>, IActiveRe
 
     private async Task<IReadOnlyCollection<T>> ByKeysAsync<TId>(
         Expression<Func<T, bool>>? defaultExpression,
-        IEnumerable<TId> keys)
+        IEnumerable<TId> keys,
+        bool noTracking = false)
         where TId : notnull
     {
         keys = keys?.Distinct().ToArray() ?? throw new ArgumentNullException(nameof(keys));
@@ -114,6 +115,9 @@ internal class ActiveRecordRepository<T> : IActiveRecordRepository<T>, IActiveRe
 
         var expression = ActiveRecordExpression.KeyIn<T>(_settings, keys.Cast<object>());
         queryable = queryable.Where(expression);
+
+        if (noTracking)
+            queryable = queryable.AsNoTracking();
 
         return await queryable.ToArrayAsync();
     }
