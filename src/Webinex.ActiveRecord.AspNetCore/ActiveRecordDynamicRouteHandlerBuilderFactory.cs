@@ -58,6 +58,7 @@ public class ActiveRecordDynamicRouteHandlerBuilderFactory<TType> : ActiveRecord
     public override RouteHandlerBuilder Create()
     {
         var endpoint = CreateBase()
+            .WithName($"{_configuration.Definition.Name}_{_method.Name}")
             .WithTags(_configuration.Definition.Name);
 
         if (BodyParam != null)

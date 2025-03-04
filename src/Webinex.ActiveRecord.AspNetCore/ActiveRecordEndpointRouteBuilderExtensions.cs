@@ -68,7 +68,7 @@ public static class ActiveRecordEndpointRouteBuilderExtensions
                             var queryObject = query != null ? await deserializer.DeserializeAsync(query) : null;
                             return await service.QueryAsync(queryObject);
                         })
-                    .WithName($"GetAll{name}")
+                    .WithName($"{name}_GetAll")
                     .WithTags(name));
 
             ConfigureRoute(
@@ -78,7 +78,7 @@ public static class ActiveRecordEndpointRouteBuilderExtensions
                                 [FromRoute(Name = "id")] TId id,
                                 [FromServices] IActiveRecordService<TType> repository) =>
                             await repository.ByKeyAsync(id!))
-                    .WithName($"Get{name}")
+                    .WithName($"{name}_Get")
                     .WithTags(name));
 
             foreach (var method in _configuration.Definition.Methods)

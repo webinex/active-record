@@ -51,11 +51,11 @@ internal class ActiveRecordAuthorizationService<T> : IActiveRecordAuthorizationS
         var arguments = parameters.Select(
             x =>
             {
-                if (x.ParameterType.IsAssignableTo(typeof(IActionContext)))
-                    return context;
-
-                if (x.ParameterType == typeof(T))
+                if (typeof(T).IsAssignableTo(x.ParameterType))
                     return context.Instance;
+
+                if (typeof(IActionContext<T>).IsAssignableTo(x.ParameterType))
+                    return context;
 
                 return _serviceProvider.GetRequiredService(x.ParameterType);
             }).ToArray();
