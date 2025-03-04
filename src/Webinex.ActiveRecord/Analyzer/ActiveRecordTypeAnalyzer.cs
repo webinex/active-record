@@ -42,7 +42,7 @@ public class ActiveRecordTypeAnalyzer : IActiveRecordTypeAnalyzer
     protected virtual Delegate? GetAuthorize(Type type)
     {
         var settings = Settings.AuthorizationSettings(type);
-        return settings?.AuthorizeDelegate;
+        return settings?.AccessExpressionFactory;
     }
 
     protected virtual string GetName(Type type)
@@ -99,7 +99,7 @@ public class ActiveRecordTypeAnalyzer : IActiveRecordTypeAnalyzer
         var name = GetName(methodInfo);
         var actionType = ResolveActionType(methodInfo);
         var parameters = GetMethodParameterDefinitions(methodInfo);
-        var accessFilterFactory = GetAuthorize(type, methodInfo);
+        var accessFilterFactory = GetAuthorize(type, methodInfo, actionType);
         return new ActiveRecordMethodDefinition(actionType, methodInfo, parameters, accessFilterFactory, name);
     }
 
@@ -108,10 +108,10 @@ public class ActiveRecordTypeAnalyzer : IActiveRecordTypeAnalyzer
         return methodInfo.Name;
     }
 
-    protected virtual Delegate? GetAuthorize(Type type, MethodInfo methodInfo)
+    protected virtual Delegate? GetAuthorize(Type type, MethodInfo methodInfo, ActionType actionType)
     {
         var settings = Settings.AuthorizationSettings(type);
-        return settings?.Rules.FirstOrDefault(rule => rule.Predicate(methodInfo))?.Rule;
+        return settings?.Rules.FirstOrDefault(rule => rule.MethodPredicate(methodInfo, actionType))?.Authorize;
     }
 
     protected virtual ActionType ResolveActionType(MethodInfo methodInfo)

@@ -63,7 +63,7 @@ internal class ActiveRecordService<TType> : IActiveRecordService<TType>
         var instance = await _repository.ByKeyAsync(id);
         instance = instance ?? throw CodedException.NotFound(id);
         
-        var context = new ActionContext<TType>(method.Type, _settings.Definition, method, instance, body);
+        var context = new ActionContext<TType>(_services, method.Type, _settings.Definition, method, instance, body);
         await _authorizationService.ThrowAsync(context);
 
         var result = method.MethodInfo.Invoke(
@@ -77,7 +77,7 @@ internal class ActiveRecordService<TType> : IActiveRecordService<TType>
 
     private async Task<object?> InvokeStaticAsync(ActiveRecordMethodDefinition method, object? body)
     {
-        var context = new ActionContext<TType>(method.Type, _settings.Definition, method, default, body);
+        var context = new ActionContext<TType>(_services, method.Type, _settings.Definition, method, default, body);
         await _authorizationService.ThrowAsync(context);
 
         var services = ResolveServices(method);

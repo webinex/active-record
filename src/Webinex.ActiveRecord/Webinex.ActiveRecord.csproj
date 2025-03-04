@@ -24,8 +24,4 @@
       <None Remove="Webinex.ActiveRecord.csproj.DotSettings" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="DataAccess\" />
-    </ItemGroup>
-
 </Project>

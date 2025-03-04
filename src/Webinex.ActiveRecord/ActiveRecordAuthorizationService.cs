@@ -1,6 +1,7 @@
 ﻿using System.Linq.Expressions;
 using Microsoft.Extensions.DependencyInjection;
 using Webinex.ActiveRecord.Annotations;
+using Webinex.ActiveRecord.Common;
 
 namespace Webinex.ActiveRecord;
 
@@ -25,7 +26,10 @@ internal class ActiveRecordAuthorizationService<T> : IActiveRecordAuthorizationS
             throw new InvalidOperationException($"Invalid action type {context.Type}");
 
         var authorize = context.Definition.Authorize;
-        return authorize != null ? await InvokeAsync<Expression<Func<T, bool>>>(context, authorize) : null;
+        if (authorize == null) return null;
+
+        var expression = await InvokeAsync<LambdaExpression>(context, authorize);
+        return expression != null ? Expressions.ReplaceParameter<T>(expression) : null;
     }
 
     public async Task<bool> InvokeAsync(IActionContext<T> context)
@@ -42,12 +46,12 @@ internal class ActiveRecordAuthorizationService<T> : IActiveRecordAuthorizationS
 
     private async Task<TResult?> InvokeAsync<TResult>(IActionContext<T> context, Delegate authorize)
     {
-        var methodInfo = authorize.GetType().GetMethod("Invoke")!;
+        var methodInfo = authorize.Method;
         var parameters = methodInfo.GetParameters();
         var arguments = parameters.Select(
             x =>
             {
-                if (x.ParameterType == typeof(IActionContext<T>))
+                if (x.ParameterType.IsAssignableTo(typeof(IActionContext)))
                     return context;
 
                 if (x.ParameterType == typeof(T))
@@ -56,7 +60,7 @@ internal class ActiveRecordAuthorizationService<T> : IActiveRecordAuthorizationS
                 return _serviceProvider.GetRequiredService(x.ParameterType);
             }).ToArray();
 
-        var result = methodInfo.Invoke(authorize, arguments)!;
+        var result = authorize.DynamicInvoke(arguments)!;
         var underlying = await Result.UnwrapAsync(result);
         return (TResult?)underlying;
     }

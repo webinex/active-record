@@ -33,6 +33,8 @@ internal class ActiveRecordQueryObjectTypeExtension : ObjectTypeExtension
             .Field(settings.Definition.Name.Pluralize(inputIsKnownToBeSingular: false).Camelize())
             .Argument("query", a => a.Type<StringType>())
             .Type<NonNullType<ListType<NonNullType<ActiveRecordGraphQL<TType>>>>>()
+            // Disabled due to The field `Query.XXX` declares the data middleware `UseProjection` more than once.
+            // .UseProjection<TType>()
             .Resolve(
                 async ctx =>
                 {
@@ -41,8 +43,7 @@ internal class ActiveRecordQueryObjectTypeExtension : ObjectTypeExtension
                     var queryArg = ctx.ArgumentValue<string?>("query");
                     var query = queryArg != null ? await queryDeserializer.DeserializeAsync(queryArg) : null;
                     return await service.QueryAsync(query);
-                })
-            .UseProjection<TType>();
+                });
 
         descriptor
             .Field(settings.Definition.Name.Camelize())

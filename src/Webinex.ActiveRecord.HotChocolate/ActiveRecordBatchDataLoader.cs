@@ -11,7 +11,7 @@ public class ActiveRecordBatchDataLoader<TType> : BatchDataLoader<object, TType>
         IBatchScheduler batchScheduler,
         IActiveRecordRepository<TType> repository,
         IActiveRecordGraphQLDataLock @lock,
-        DataLoaderOptions? options = null) : base(
+        DataLoaderOptions options) : base(
         batchScheduler,
         options)
     {

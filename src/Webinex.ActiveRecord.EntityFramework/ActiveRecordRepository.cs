@@ -8,6 +8,7 @@ namespace Webinex.ActiveRecord;
 internal class ActiveRecordRepository<T> : IActiveRecordRepository<T>, IActiveRecordServiceRepository<T>
     where T : class
 {
+    private readonly IServiceProvider _services;
     private readonly IActiveRecordDbContextProvider _dbContextProvider;
     private readonly IAskyFieldMap<T>? _fieldMap;
     private readonly IActiveRecordSettings<T> _settings;
@@ -17,11 +18,13 @@ internal class ActiveRecordRepository<T> : IActiveRecordRepository<T>, IActiveRe
         IActiveRecordDbContextProvider dbContextProvider,
         IActiveRecordSettings<T> settings,
         IActiveRecordAuthorizationService<T> authorizationService,
+        IServiceProvider services,
         IAskyFieldMap<T>? fieldMap = null)
     {
         _dbContextProvider = dbContextProvider;
         _settings = settings;
         _authorizationService = authorizationService;
+        _services = services;
         _fieldMap = fieldMap;
     }
 
@@ -38,7 +41,7 @@ internal class ActiveRecordRepository<T> : IActiveRecordRepository<T>, IActiveRe
 
     async Task<IQueryable<T>> IActiveRecordServiceRepository<T>.QueryableAsync(ActiveRecordQuery? query)
     {
-        var context = new ActionContext<T>(ActionType.GetAll, _settings.Definition, null, null, null);
+        var context = new ActionContext<T>(_services, ActionType.GetAll, _settings.Definition, null, null, null);
         var defaultPredicate = await _authorizationService.ExpressionAsync(context);
         var queryable = await QueryableAsync(defaultPredicate, query);
         return queryable.AsNoTracking();
@@ -52,7 +55,7 @@ internal class ActiveRecordRepository<T> : IActiveRecordRepository<T>, IActiveRe
 
     async Task<IReadOnlyCollection<T>> IActiveRecordServiceRepository<T>.QueryAsync(ActiveRecordQuery? query)
     {
-        var context = new ActionContext<T>(ActionType.GetAll, _settings.Definition, null, null, null);
+        var context = new ActionContext<T>(_services, ActionType.GetAll, _settings.Definition, null, null, null);
         var defaultPredicate = await _authorizationService.ExpressionAsync(context);
         var queryable = await QueryableAsync(defaultPredicate, query);
         return await queryable.AsNoTracking().ToArrayAsync();
@@ -94,7 +97,7 @@ internal class ActiveRecordRepository<T> : IActiveRecordRepository<T>, IActiveRe
     async Task<IReadOnlyCollection<T>> IActiveRecordServiceRepository<T>.ByKeysAsync<TId>(
         IEnumerable<TId> keys)
     {
-        var context = new ActionContext<T>(ActionType.GetByKey, _settings.Definition, null, null, null);
+        var context = new ActionContext<T>(_services, ActionType.GetByKey, _settings.Definition, null, null, null);
         var defaultExpression = await _authorizationService.ExpressionAsync(context);
         return await ByKeysAsync(defaultExpression, keys);
     }

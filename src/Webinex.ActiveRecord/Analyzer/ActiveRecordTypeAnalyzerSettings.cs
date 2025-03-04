@@ -62,15 +62,11 @@ public class ActiveRecordTypeAnalyzerSettings
     private AuthorizationSettings? AuthorizationSettingsTyped<TType>()
     {
         var convention = AuthorizationConvention<TType>();
-        if (convention == null) return null;
-
-        var builder = new AuthorizationSettingsBuilder<TType>();
-        convention.Configure(builder);
-        return builder;
+        return convention?.Create(typeof(TType));
     }
 
-    private IActionAuthorizationConvention<TType>? AuthorizationConvention<TType>()
+    private IAuthorizationConvention? AuthorizationConvention<TType>()
     {
-        return (IActionAuthorizationConvention<TType>?)AuthorizationConventionFactory(typeof(TType));
+        return (IAuthorizationConvention?)AuthorizationConventionFactory(typeof(TType));
     }
 }
