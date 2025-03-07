@@ -82,10 +82,17 @@ public class ActiveRecordTypeAnalyzer : IActiveRecordTypeAnalyzer
 
     protected virtual MethodInfo[] GetMethods(Type type)
     {
+        Type[] allowedStaticReturnTypes =
+        [
+            type,
+            typeof(Task<>).MakeGenericType(type),
+            typeof(ValueTask<>).MakeGenericType(type),
+        ];
+
         var methods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static)
             .Where(x => x is { IsAbstract: false, IsGenericMethod: false, IsSpecialName: false })
             .Where(x => x.DeclaringType != typeof(object))
-            .Where(x => !x.IsStatic || x.ReturnType == type)
+            .Where(x => !x.IsStatic || allowedStaticReturnTypes.Contains(x.ReturnType))
             .Where(x => !Settings.IgnoreMethodPredicate(x))
             .ToArray();
 
