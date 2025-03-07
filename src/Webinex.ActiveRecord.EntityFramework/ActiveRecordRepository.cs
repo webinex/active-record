@@ -135,4 +135,18 @@ internal class ActiveRecordRepository<T> : IActiveRecordRepository<T>, IActiveRe
         await DbContext.Set<T>().AddRangeAsync(entities);
         return entities.ToArray();
     }
+
+    public virtual Task RemoveRangeAsync(IEnumerable<T> entities)
+    {
+        entities = entities?.ToArray() ?? throw new ArgumentNullException(nameof(entities));
+        DbContext.Set<T>().RemoveRange(entities);
+        return Task.CompletedTask;
+    }
+
+    public async Task<bool> AnyAsync(FilterRule? filterRule = null)
+    {
+        var query = new ActiveRecordQuery(filterRule: filterRule);
+        var queryable = await QueryableAsync(defaultPredicate: null, query: query);
+        return await queryable.AnyAsync();
+    }
 }
