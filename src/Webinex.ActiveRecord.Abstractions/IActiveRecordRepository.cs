@@ -4,7 +4,7 @@ namespace Webinex.ActiveRecord;
 
 public interface IActiveRecordRepository<T>
 {
-    Task<IQueryable<T>> QueryableAsync(ActiveRecordQuery? query);
+    Task<IQueryable<T>> QueryableAsync(ActiveRecordQuery? query = null);
     Task<IReadOnlyCollection<T>> QueryAsync(ActiveRecordQuery? query = null);
     Task<int> CountAsync(FilterRule? filterRule);
 
@@ -15,6 +15,10 @@ public interface IActiveRecordRepository<T>
         where TKey : notnull;
 
     Task<IReadOnlyCollection<T>> AddRangeAsync(IEnumerable<T> entities);
+
+    Task RemoveRangeAsync(IEnumerable<T> entities);
+
+    Task<bool> AnyAsync(FilterRule? filterRule = null);
 }
 
 public static class ActiveRecordRepositoryExtensions
@@ -33,5 +37,12 @@ public static class ActiveRecordRepositoryExtensions
         entity = entity ?? throw new ArgumentNullException(nameof(entity));
         var result = await repository.AddRangeAsync([entity]);
         return result.First();
+    }
+
+    public static async Task RemoveAsync<T>(this IActiveRecordRepository<T> repository, T entity)
+    {
+        repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        entity = entity ?? throw new ArgumentNullException(nameof(entity));
+        await repository.RemoveRangeAsync([entity]);
     }
 }
