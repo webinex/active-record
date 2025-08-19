@@ -59,6 +59,7 @@ internal class ActiveRecordQueryObjectTypeExtension : ObjectTypeExtension
 
         descriptor.Field($"{settings.Definition.Name.Pascalize()}Count")
             .Argument("filterRule", a => a.Type<JsonType>())
+            .Type<NonNullType<IntType>>()
             .Resolve(async ctx =>
             {
                 var service = ctx.Service<IActiveRecordService<TType>>();
