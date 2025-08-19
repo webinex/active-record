@@ -82,6 +82,14 @@ internal class ActiveRecordRepository<T> : IActiveRecordRepository<T>, IActiveRe
         return Task.FromResult(queryable);
     }
 
+    public async Task<int> CountAsync(FilterRule? filterRule = null)
+    {
+        var context = new ActionContext<T>(_services, ActionType.GetAll, _settings.Definition, null, null, null);
+        var defaultExpression = await _authorizationService.ExpressionAsync(context);
+        var queryable = await QueryableAsync(defaultExpression, new ActiveRecordQuery(filterRule));
+        return await queryable.CountAsync();
+    }
+
     async Task<int> IActiveRecordRepository<T>.CountAsync(FilterRule? filterRule)
     {
         var query = new ActiveRecordQuery(filterRule: filterRule);

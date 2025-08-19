@@ -1,11 +1,16 @@
-﻿namespace Webinex.ActiveRecord;
+﻿using Webinex.Asky;
+
+namespace Webinex.ActiveRecord;
 
 public interface IActiveRecordServiceRepository<T>
 {
     Task<IQueryable<T>> QueryableAsync(ActiveRecordQuery? query = null);
     Task<IReadOnlyCollection<T>> QueryAsync(ActiveRecordQuery? query = null);
+
     Task<IReadOnlyCollection<T>> ByKeysAsync<TKey>(IEnumerable<TKey> keys)
         where TKey : notnull;
+
+    Task<int> CountAsync(FilterRule? filterRule = null);
 
     Task<IReadOnlyCollection<T>> AddRangeAsync(IEnumerable<T> entities);
 }

@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Nodes;
+﻿using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Webinex.Asky;
@@ -46,12 +47,22 @@ internal class ActiveRecordQueryDeserializer<T>
         return SortRule.FromJsonArray(jsonString, _jsonOptions.Value.JsonSerializerOptions)!;
     }
 
-    private FilterRule DeserializeFilterRule(JsonNode filterRuleJNode)
+    public FilterRule DeserializeFilterRule(JsonNode filterRuleJNode)
     {
         var jsonString = filterRuleJNode.ToJsonString();
         return _fieldMap is not null
             ? FilterRule.FromJson(jsonString, _fieldMap)!
             : FilterRule.FromJson(jsonString, _jsonOptions.Value.JsonSerializerOptions)!;
+    }
+
+    public FilterRule? DeserializeFilterRule(JsonElement? filterRuleJNode)
+    {
+        if (filterRuleJNode is null)
+            return null;
+        
+        return _fieldMap is not null
+            ? FilterRule.FromJson(filterRuleJNode.Value, _fieldMap)!
+            : FilterRule.FromJson(filterRuleJNode.Value.GetRawText(), _jsonOptions.Value.JsonSerializerOptions)!;
     }
 
     private JsonNode? GetJNode(JsonObject jObject, string key)
