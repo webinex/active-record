@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Webinex.ActiveRecord.Annotations;
+using Webinex.Asky;
 using Webinex.Coded;
 
 namespace Webinex.ActiveRecord;
@@ -9,6 +10,8 @@ public interface IActiveRecordService<TType>
 {
     Task<IQueryable<TType>> QueryAsync(ActiveRecordQuery? query = null);
     Task<TType?> ByKeyAsync(object key);
+    Task<IReadOnlyCollection<TType>> GetAllAsync(ActiveRecordQuery? query = null);
+    Task<int> CountAsync(FilterRule? filterRule = null);
 
     Task<object?> InvokeAsync(
         ActiveRecordMethodDefinition method,
@@ -47,6 +50,16 @@ internal class ActiveRecordService<TType> : IActiveRecordService<TType>
     public async Task<TType?> ByKeyAsync(object key)
     {
         return await _repository.ByKeyAsync(key);
+    }
+
+    public async Task<IReadOnlyCollection<TType>> GetAllAsync(ActiveRecordQuery? query = null)
+    {
+        return await _repository.QueryAsync(query);
+    }
+
+    public async Task<int> CountAsync(FilterRule? filterRule = null)
+    {
+        return await _repository.CountAsync(filterRule);
     }
 
     public Task<object?> InvokeAsync(ActiveRecordMethodDefinition method, object? id, object? body)

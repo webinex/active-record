@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        working-directory: src
+        run: dotnet restore Webinex.ActiveRecord.sln
+
+      - name: Build
+        working-directory: src
+        run: dotnet build Webinex.ActiveRecord.sln --configuration Release --no-restore
+
+      - name: Test
+        working-directory: src
+        run: dotnet test Webinex.ActiveRecord.sln --no-build --verbosity normal
