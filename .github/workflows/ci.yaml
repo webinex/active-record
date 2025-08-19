@@ -3,10 +3,10 @@ name: CI
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     branches:
-      - master
+      - main
 
 jobs:
   build:
@@ -32,4 +32,4 @@ jobs:
 
       - name: Test
         working-directory: src
-        run: dotnet test Webinex.ActiveRecord.sln --no-build --verbosity normal
+        run: dotnet test ./Webinex.ActiveRecord.Tests/Webinex.ActiveRecord.Tests.csproj --configuration Release --no-build --verbosity normal
