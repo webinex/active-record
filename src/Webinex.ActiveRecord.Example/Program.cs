@@ -1,6 +1,5 @@
 using System.Text.Json.Serialization;
 using Webinex.ActiveRecord;
-using Webinex.ActiveRecord.Annotations;
 using Webinex.ActiveRecord.AspNetCore;
 using Webinex.ActiveRecord.Example;
 using Webinex.ActiveRecord.Example.Types;
@@ -34,6 +33,7 @@ builder.Services
     .AddQueryType()
     .AddProjections()
     .AddActiveRecordTypes()
+    .AddApplicationService<ILogger<GraphQLExceptionLogger>>()
     .AddDiagnosticEventListener<GraphQLExceptionLogger.Execution>()
     .AddDiagnosticEventListener<GraphQLExceptionLogger.Server>()
     .AddDiagnosticEventListener<GraphQLExceptionLogger.DataLoader>();
@@ -67,8 +67,6 @@ app
             .AddEndpointFilter<DbContextSaveChangesFilter>()));
 
 app.MapGraphQL();
+app.MapNitroApp();
 
 app.Run();
-
-Action<Client> f = x => x.Update(From.Service<IAuth>(), From.Body<Client.UpdateInput>());
-Action<Client> f2 = x => Client.New(From.Service<IAuth>(), From.Body<Client.NewInput>());
