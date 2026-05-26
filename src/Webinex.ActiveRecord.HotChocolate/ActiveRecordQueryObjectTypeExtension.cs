@@ -58,7 +58,7 @@ internal class ActiveRecordQueryObjectTypeExtension : ObjectTypeExtension
             });
 
         descriptor.Field($"{settings.Definition.Name.Camelize()}Count")
-            .Argument("filterRule", a => a.Type<JsonType>())
+            .Argument("filterRule", a => a.Type<AnyType>())
             .Type<NonNullType<IntType>>()
             .Resolve(async ctx =>
             {

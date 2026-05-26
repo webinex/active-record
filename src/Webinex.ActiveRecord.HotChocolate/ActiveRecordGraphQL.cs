@@ -7,9 +7,9 @@ namespace Webinex.ActiveRecord.HotChocolate;
 
 public static class ActiveRecordGraphQL
 {
-    public static INamedType New(Type type, IServiceProvider sp)
+    public static ITypeDefinition New(Type type, IServiceProvider sp)
     {
-        return (INamedType)Activator.CreateInstance(
+        return (ITypeDefinition)Activator.CreateInstance(
             typeof(ActiveRecordGraphQL<>).MakeGenericType(type),
             sp.GetRequiredService(typeof(IActiveRecordSettings<>).MakeGenericType(type)))!;
     }
