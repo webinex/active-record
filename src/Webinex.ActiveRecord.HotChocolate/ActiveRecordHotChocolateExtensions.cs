@@ -1,4 +1,5 @@
 ﻿using HotChocolate.Execution.Configuration;
+using HotChocolate.Types;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -29,7 +30,20 @@ public static class ActiveRecordHotChocolateExtensions
 
         foreach (var record in configuration.Records)
         {
-            builder.AddType(sp => ActiveRecordGraphQL.New(record.Type, sp));
+            var settingsDescriptor = builder.Services.FirstOrDefault(x =>
+                x.ServiceType == typeof(IActiveRecordSettings<>).MakeGenericType(record.Type));
+            
+            if (settingsDescriptor?.ImplementationInstance == null)
+                throw new InvalidOperationException(
+                    $"IActiveRecordSettings<{record.Type.Name}> is not registered in the service collection. Please call services.AddActiveRecordService(o => o.Add<{record.Type.Name}>() before GraphQL configuration.");
+
+            var settings = settingsDescriptor.ImplementationInstance;
+            
+            var graphQLType = (ITypeDefinition)Activator.CreateInstance(
+                typeof(ActiveRecordGraphQL<>).MakeGenericType(record.Type),
+                settings)!;
+            
+            builder.AddType(graphQLType);
         }
 
         return builder;
