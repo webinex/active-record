@@ -48,7 +48,7 @@ public abstract class GraphQLExceptionLogger
             _logger = logger;
         }
 
-        public override void RequestError(IRequestContext context, Exception exception)
+        public override void RequestError(RequestContext context, Exception exception)
         {
             _logger.LogError(exception, "GraphQL request error");
         }
@@ -57,12 +57,6 @@ public abstract class GraphQLExceptionLogger
         {
             _logger.LogError(error.Exception, $"GraphQL resolver error: {error.Code}\n\t{error.Path}\n\t{error.Message}");
             base.ResolverError(context, error);
-        }
-
-        public override void SyntaxError(IRequestContext context, IError error)
-        {
-            _logger.LogError(error.Exception, $"GraphQL syntax error: {error.Code}\n\t{error.Path}\n\t{error.Message}");
-            base.SyntaxError(context, error);
         }
 
         public override void TaskError(IExecutionTask task, IError error)

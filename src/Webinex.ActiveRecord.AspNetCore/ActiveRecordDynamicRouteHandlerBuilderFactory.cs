@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Routing.Template;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Webinex.ActiveRecord.Annotations;
 
 namespace Webinex.ActiveRecord.AspNetCore;
@@ -65,13 +65,16 @@ public class ActiveRecordDynamicRouteHandlerBuilderFactory<TType> : ActiveRecord
             endpoint = endpoint.Accepts(BodyParam.ParameterInfo.ParameterType, MediaTypeNames.Application.Json);
 
         var routeTemplate = TemplateParser.Parse(Path);
-
-        endpoint = endpoint.WithOpenApi(
-            x =>
+        
+        endpoint = endpoint.AddOpenApiOperationTransformer(
+            (op, _, _) =>
             {
+                op.Parameters ??= new List<IOpenApiParameter>();
+                op.Parameters.Clear();
+                
                 foreach (var parameter in routeTemplate.Parameters)
                 {
-                    x.Parameters.Add(
+                    op.Parameters.Add(
                         new OpenApiParameter
                         {
                             Name = parameter.Name,
@@ -80,7 +83,7 @@ public class ActiveRecordDynamicRouteHandlerBuilderFactory<TType> : ActiveRecord
                         });
                 }
 
-                return x;
+                return Task.FromResult(op);
             });
 
         _configuration.ConfigureRoute(endpoint, _configuration.Definition, _method);

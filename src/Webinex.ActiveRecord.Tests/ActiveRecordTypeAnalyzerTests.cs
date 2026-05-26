@@ -1,4 +1,4 @@
-using FluentAssertions;
+using Shouldly;
 
 namespace Webinex.ActiveRecord.Tests;
 
@@ -11,22 +11,10 @@ public class ActiveRecordTypeAnalyzerTests
 
         var definition = subject.GetDefinition(typeof(TestClass));
 
-        definition.Methods.Should().BeEquivalentTo(
-            new[]
-            {
-                new
-                {
-                    Name = nameof(TestClass.New),
-                },
-                new
-                {
-                    Name = nameof(TestClass.NewAsync),
-                },
-                new
-                {
-                    Name = nameof(TestClass.NewValueAsync),
-                }
-            });
+        definition.Methods.Count.ShouldBe(3);
+        definition.Methods.Any(x => x.Name == nameof(TestClass.New)).ShouldBeTrue();
+        definition.Methods.Any(x => x.Name == nameof(TestClass.NewAsync)).ShouldBeTrue();
+        definition.Methods.Any(x => x.Name == nameof(TestClass.NewValueAsync)).ShouldBeTrue();
     }
 
     private class TestClass
