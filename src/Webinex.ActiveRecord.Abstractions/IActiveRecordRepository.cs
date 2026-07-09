@@ -20,6 +20,7 @@ public interface IActiveRecordRepository<TType>
 public static class ActiveRecordRepositoryExtensions
 {
     public static async Task<TType?> ByKeyAsync<TType, TKey>(this IActiveRecordRepository<TType> repository, TKey key)
+        where TKey : notnull
     {
         repository = repository ?? throw new ArgumentNullException(nameof(repository));
         key = key ?? throw new ArgumentNullException(nameof(key));
