@@ -9,6 +9,7 @@ internal class ActiveRecordRepository<T> : IActiveRecordInteractorRepository<T>
 {
     private readonly IActiveRecordDbContextProvider _dbContextProvider;
     private readonly IActiveRecordSettings<T> _settings;
+    private readonly IAskyFieldMap<T>? _fieldMap;
 
     public ActiveRecordRepository(
         IActiveRecordDbContextProvider dbContextProvider,
@@ -17,7 +18,7 @@ internal class ActiveRecordRepository<T> : IActiveRecordInteractorRepository<T>
     {
         _dbContextProvider = dbContextProvider;
         _settings = settings;
-        FieldMap = fieldMap;
+        _fieldMap = fieldMap;
     }
 
     private ActiveRecordRepository(
@@ -26,7 +27,7 @@ internal class ActiveRecordRepository<T> : IActiveRecordInteractorRepository<T>
         : this(
             repository._dbContextProvider,
             repository._settings,
-            repository.FieldMap)
+            repository._fieldMap)
     {
         DefaultPredicate = defaultPredicate;
     }
@@ -34,7 +35,7 @@ internal class ActiveRecordRepository<T> : IActiveRecordInteractorRepository<T>
     private DbContext DbContext => _dbContextProvider.Value;
 
     private IAskyFieldMap<T> FieldMap =>
-        field ??
+        _fieldMap ??
         throw new InvalidOperationException($"Field map for type {typeof(T).Name} not found in DI container.");
 
     private Expression<Func<T, bool>>? DefaultPredicate { get; }
