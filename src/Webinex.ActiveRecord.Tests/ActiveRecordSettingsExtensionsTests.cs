@@ -7,13 +7,7 @@ public class ActiveRecordExpressionTests
     [Test]
     public void GetKey_WhenKeyTypeMatch_ShouldNotThrow()
     {
-        ActiveRecordExpression.GetKey<TestClass, Guid>(new ActiveRecordSettings());
-    }
-    
-    [Test]
-    public void GetKey_WhenKeyTypeObject_ShouldNotThrow()
-    {
-        ActiveRecordExpression.GetKey<TestClass, object>(new ActiveRecordSettings());
+        new ActiveRecordSettings().GetKeyExpression<TestClass, Guid>();
     }
 
     private class ActiveRecordSettings : IActiveRecordSettings

@@ -19,6 +19,6 @@
     <ItemGroup>
       <PackageReference Include="HotChocolate" Version="16.0.0" />
       <PackageReference Include="HotChocolate.Data.EntityFramework" Version="16.0.0" />
-      <PackageReference Include="Webinex.Asky" Version="1.6.0" />
+      <PackageReference Include="Webinex.Asky" Version="1.6.1" />
     </ItemGroup>
 </Project>

@@ -19,15 +19,6 @@ internal class ActiveRecordExpression
 
         return Expression.Lambda<Func<TType, bool>>(containsExpression, parameter);
     }
-
-    public static Expression<Func<TType, TKey>> GetKey<TType, TKey>(IActiveRecordSettings settings)
-    {
-        var key = settings.Definition.Key;
-        var parameter = Expression.Parameter(typeof(TType), "x");
-        var propertyAccess = Expression.MakeMemberAccess(parameter, key);
-        Expression expression = key.PropertyType != typeof(TKey) ? Expression.Convert(propertyAccess, typeof(TKey)) : propertyAccess;
-        return Expression.Lambda<Func<TType, TKey>>(expression, parameter);
-    }
     
     private static IList Cast(Type type, IEnumerable<object> values)
     {

@@ -4,14 +4,10 @@ namespace Webinex.ActiveRecord;
 
 public interface IActiveRecordRepository<T>
 {
-    Task<IQueryable<T>> QueryableAsync(ActiveRecordQuery? query = null);
-    Task<IReadOnlyCollection<T>> QueryAsync(ActiveRecordQuery? query = null);
+    Task<ListSegment<T>> ListSegmentAsync(Query? query = null, bool includeTotal = true, bool readOnly = false);
     Task<int> CountAsync(FilterRule? filterRule);
 
-    Task<IReadOnlyCollection<T>> ByKeysAsync<TKey>(IEnumerable<TKey> keys)
-        where TKey : notnull;
-
-    Task<IReadOnlyDictionary<TKey, T>> MapAsync<TKey>(IEnumerable<TKey> keys)
+    Task<IReadOnlyCollection<T>> ByKeysAsync<TKey>(IEnumerable<TKey> keys, bool readOnly = false)
         where TKey : notnull;
 
     Task<IReadOnlyCollection<T>> AddRangeAsync(IEnumerable<T> entities);
@@ -29,6 +25,15 @@ public static class ActiveRecordRepositoryExtensions
         key = key ?? throw new ArgumentNullException(nameof(key));
         var result = await repository.ByKeysAsync([key]);
         return result.FirstOrDefault();
+    }
+
+    public static async Task<IReadOnlyCollection<T>> GetAllAsync<T>(
+        this IActiveRecordRepository<T> repository,
+        Query? query = null,
+        bool readOnly = false)
+    {
+        var result = await repository.ListSegmentAsync(query, includeTotal: false, readOnly: readOnly);
+        return result.Items;
     }
 
     public static async Task<T> AddAsync<T>(this IActiveRecordRepository<T> repository, T entity)

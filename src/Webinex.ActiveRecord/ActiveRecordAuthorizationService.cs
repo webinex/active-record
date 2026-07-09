@@ -48,14 +48,21 @@ internal class ActiveRecordAuthorizationService<T> : IActiveRecordAuthorizationS
     {
         var methodInfo = authorize.Method;
         var parameters = methodInfo.GetParameters();
+        var bodyParamDef =
+            context.MethodDefinition?.Parameters.FirstOrDefault(x => x.ParameterSource == ParameterSource.Body);
+        
         var arguments = parameters.Select(
             x =>
             {
+                
                 if (typeof(T).IsAssignableTo(x.ParameterType))
                     return context.Instance;
 
                 if (typeof(IActionContext<T>).IsAssignableTo(x.ParameterType))
                     return context;
+
+                if (x.ParameterType == bodyParamDef?.ParameterInfo.ParameterType)
+                    return context.Body;
 
                 return _serviceProvider.GetRequiredService(x.ParameterType);
             }).ToArray();

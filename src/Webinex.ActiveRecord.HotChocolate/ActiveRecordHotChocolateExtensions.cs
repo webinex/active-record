@@ -17,9 +17,8 @@ public static class ActiveRecordHotChocolateExtensions
     public static IRequestExecutorBuilder AddActiveRecordTypes(this IRequestExecutorBuilder builder)
     {
         builder.AddTypeExtension(typeof(ActiveRecordQueryObjectTypeExtension));
-        builder.Services.AddScoped(typeof(ActiveRecordBatchDataLoader<>));
+        builder.Services.AddScoped(typeof(ActiveRecordBatchDataLoader<,>));
         builder.Services.TryAddSingleton<IActiveRecordGraphQLDataLock, NoLockActiveRecordGraphQLDataLock>();
-        builder.Services.TryAddSingleton(typeof(ActiveRecordQueryDeserializer<>), typeof(ActiveRecordQueryDeserializer<>));
 
         var configuration = (ActiveRecordServiceConfiguration?)builder.Services
             .FirstOrDefault(x => x.ServiceType == typeof(ActiveRecordServiceConfiguration))?.ImplementationInstance;

@@ -1,7 +1,7 @@
 <Project>
     <PropertyGroup>
         <Title>Webinex Active Record</Title>
-        <PackageVersion>0.0.1-build18</PackageVersion>
+        <PackageVersion>1.0.0-build01</PackageVersion>
         <Authors>Webinex Dev</Authors>
         <NoWarn>$(NoWarn);CS1591</NoWarn>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
