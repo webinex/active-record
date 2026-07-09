@@ -109,9 +109,9 @@ public class ActiveRecordDynamicRouteHandlerBuilderFactory<TType> : ActiveRecord
             });
     }
 
-    private IActiveRecordService<TType> ResolveService(HttpContext context)
+    private IActiveRecordInteractor<TType> ResolveService(HttpContext context)
     {
-        return context.RequestServices.GetRequiredService<IActiveRecordService<TType>>();
+        return context.RequestServices.GetRequiredService<IActiveRecordInteractor<TType>>();
     }
 
     private object? ResolveKey(HttpContext context)

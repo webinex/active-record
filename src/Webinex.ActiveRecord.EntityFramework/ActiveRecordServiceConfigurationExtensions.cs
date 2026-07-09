@@ -10,7 +10,7 @@ public static class ActiveRecordServiceConfigurationExtensions
         where TDbContext : DbContext
     {
         @this.Services.TryAddTransient(typeof(IActiveRecordRepository<>), typeof(ActiveRecordRepository<>));
-        @this.Services.TryAddTransient(typeof(IActiveRecordServiceRepository<>), typeof(ActiveRecordRepository<>));
+        @this.Services.TryAddTransient(typeof(IActiveRecordInteractorRepository<>), typeof(ActiveRecordRepository<>));
         @this.Services.AddTransient<IActiveRecordDbContextProvider, ActiveRecordDbContextProvider<TDbContext>>();
         return @this;
     }

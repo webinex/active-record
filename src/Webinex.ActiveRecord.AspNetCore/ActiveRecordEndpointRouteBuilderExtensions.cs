@@ -59,16 +59,77 @@ public static class ActiveRecordEndpointRouteBuilderExtensions
                 _endpoints.MapGet(
                         basePath,
                         async (
-                            [FromServices] IActiveRecordService<TType> service,
+                            [FromServices] IActiveRecordInteractor<TType> interactor,
                             [FromServices] IOptions<JsonOptions> jsonOptions,
                             [FromQuery] string? query,
                             [FromServices] IAskyFieldMap<TType>? fieldMap = null) =>
                         {
-                            var deserializer = new ActiveRecordQueryDeserializer<TType>(fieldMap, jsonOptions);
-                            var queryObject = query != null ? await deserializer.DeserializeAsync(query) : null;
-                            return await service.QueryAsync(queryObject);
+                            if (!string.IsNullOrWhiteSpace(query) && fieldMap == null)
+                                throw new InvalidOperationException(
+                                    $"`query` parameter is provided but {nameof(IAskyFieldMap<>)} is not registered for type {typeof(TType).Name}. Please register it in DI or remove query parameter.");
+
+                            var q = !string.IsNullOrWhiteSpace(query) ? Query.FromJson(query, fieldMap!, jsonOptions.Value.JsonSerializerOptions) : null;
+                            return await interactor.GetAllAsync(q);
                         })
                     .WithName($"{name}_GetAll")
+                    .WithTags(name));
+
+            ConfigureRoute(
+                _endpoints.MapGet(
+                        basePath + "/list-segment",
+                        async (
+                            [FromServices] IActiveRecordInteractor<TType> interactor,
+                            [FromServices] IOptions<JsonOptions> jsonOptions,
+                            [FromQuery] string? query,
+                            [FromQuery] bool includeTotal = true,
+                            [FromServices] IAskyFieldMap<TType>? fieldMap = null) =>
+                        {
+                            if (!string.IsNullOrWhiteSpace(query) && fieldMap == null)
+                                throw new InvalidOperationException(
+                                    $"`query` parameter is provided but {nameof(IAskyFieldMap<>)} is not registered for type {typeof(TType).Name}. Please register it in DI or remove query parameter.");
+
+                            var q = !string.IsNullOrWhiteSpace(query) ? Query.FromJson(query, fieldMap!, jsonOptions.Value.JsonSerializerOptions) : null;
+                            return await interactor.ListSegmentAsync(q, includeTotal);
+                        })
+                    .WithName($"{name}_ListSegment")
+                    .WithTags(name));
+            
+            ConfigureRoute(
+                _endpoints.MapGet(
+                        basePath + "/count",
+                        async (
+                            [FromServices] IActiveRecordInteractor<TType> interactor,
+                            [FromServices] IOptions<JsonOptions> jsonOptions,
+                            [FromQuery] string? filter,
+                            [FromServices] IAskyFieldMap<TType>? fieldMap = null) =>
+                        {
+                            if (!string.IsNullOrWhiteSpace(filter) && fieldMap == null)
+                                throw new InvalidOperationException(
+                                    $"`filter` parameter is provided but {nameof(IAskyFieldMap<>)} is not registered for type {typeof(TType).Name}. Please register it in DI or remove filter parameter.");
+
+                            var filterRule = !string.IsNullOrWhiteSpace(filter) ? FilterRule.FromJson(filter, fieldMap!) : null;
+                            return await interactor.CountAsync(filterRule);
+                        })
+                    .WithName($"{name}_Count")
+                    .WithTags(name));
+            
+            ConfigureRoute(
+                _endpoints.MapGet(
+                        basePath + "/any",
+                        async (
+                            [FromServices] IActiveRecordInteractor<TType> interactor,
+                            [FromServices] IOptions<JsonOptions> jsonOptions,
+                            [FromQuery] string? filter,
+                            [FromServices] IAskyFieldMap<TType>? fieldMap = null) =>
+                        {
+                            if (!string.IsNullOrWhiteSpace(filter) && fieldMap == null)
+                                throw new InvalidOperationException(
+                                    $"`filter` parameter is provided but {nameof(IAskyFieldMap<>)} is not registered for type {typeof(TType).Name}. Please register it in DI or remove filter parameter.");
+
+                            var filterRule = !string.IsNullOrWhiteSpace(filter) ? FilterRule.FromJson(filter, fieldMap!) : null;
+                            return await interactor.AnyAsync(filterRule);
+                        })
+                    .WithName($"{name}_Any")
                     .WithTags(name));
 
             ConfigureRoute(
@@ -76,7 +137,7 @@ public static class ActiveRecordEndpointRouteBuilderExtensions
                         basePath + "/{id}",
                         async (
                                 [FromRoute(Name = "id")] TId id,
-                                [FromServices] IActiveRecordService<TType> repository) =>
+                                [FromServices] IActiveRecordInteractor<TType> repository) =>
                             await repository.ByKeyAsync(id!))
                     .WithName($"{name}_Get")
                     .WithTags(name));

@@ -2,6 +2,7 @@
 using System.Text.Json;
 using HotChocolate.Types;
 using Humanizer;
+using Webinex.Asky;
 
 namespace Webinex.ActiveRecord.HotChocolate;
 
@@ -33,17 +34,30 @@ internal class ActiveRecordQueryObjectTypeExtension : ObjectTypeExtension
     {
         descriptor
             .Field(settings.Definition.Name.Pluralize(inputIsKnownToBeSingular: false).Camelize())
-            .Argument("query", a => a.Type<StringType>())
+            .Argument("query", a => a.Type<AnyType>())
             .Type<NonNullType<ListType<NonNullType<ActiveRecordGraphQL<TType>>>>>()
             // Disabled due to The field `Query.XXX` declares the data middleware `UseProjection` more than once.
             // .UseProjection<TType>()
             .Resolve(async ctx =>
             {
-                var service = ctx.Service<IActiveRecordService<TType>>();
-                var queryDeserializer = ctx.Service<ActiveRecordQueryDeserializer<TType>>();
-                var queryArg = ctx.ArgumentValue<string?>("query");
-                var query = queryArg != null ? await queryDeserializer.DeserializeAsync(queryArg) : null;
-                return await service.QueryAsync(query);
+                var interactor = ctx.Service<IActiveRecordInteractor<TType>>();
+                var queryArg = ctx.ArgumentValue<JsonElement?>("query");
+                var query = queryArg != null ? Query.FromJson(queryArg, ctx.Service<IAskyFieldMap<TType>>()) : null;
+                return await interactor.GetAllAsync(query);
+            });
+
+        descriptor
+            .Field($"{settings.Definition.Name.Camelize()}ListSegment")
+            .Argument("query", a => a.Type<AnyType>())
+            .Argument("includeTotal", a => a.Type<BooleanType>().DefaultValue(true))
+            .Type<NonNullType<ObjectType<ListSegment<TType>>>>()
+            .Resolve(async ctx =>
+            {
+                var interactor = ctx.Service<IActiveRecordInteractor<TType>>();
+                var queryArg = ctx.ArgumentValue<JsonElement?>("query");
+                var includeTotal = ctx.ArgumentValue<bool?>("includeTotal") ?? true;
+                var query = queryArg != null ? Query.FromJson(queryArg, ctx.Service<IAskyFieldMap<TType>>()) : null;
+                return await interactor.ListSegmentAsync(query, includeTotal);
             });
 
         descriptor
@@ -52,9 +66,10 @@ internal class ActiveRecordQueryObjectTypeExtension : ObjectTypeExtension
             .Type<ActiveRecordGraphQL<TType>>()
             .Resolve(async ctx =>
             {
-                var service = ctx.Service<IActiveRecordService<TType>>();
-                return await service.ByKeyAsync(
-                    ctx.ArgumentValue<object>(settings.Definition.Key.Name.Camelize()));
+                var interactor = ctx.Service<IActiveRecordInteractor<TType>>();
+                var key = ctx.ArgumentValue<object>(settings.Definition.Key.Name.Camelize());
+                
+                return await interactor.ByKeyAsync(key);
             });
 
         descriptor.Field($"{settings.Definition.Name.Camelize()}Count")
@@ -62,10 +77,21 @@ internal class ActiveRecordQueryObjectTypeExtension : ObjectTypeExtension
             .Type<NonNullType<IntType>>()
             .Resolve(async ctx =>
             {
-                var service = ctx.Service<IActiveRecordService<TType>>();
-                var queryDeserializer = ctx.Service<ActiveRecordQueryDeserializer<TType>>();
-                return await service.CountAsync(
-                    queryDeserializer.DeserializeFilterRule(ctx.ArgumentValue<JsonElement?>("filterRule")));
+                var interactor = ctx.Service<IActiveRecordInteractor<TType>>();
+                var filterRuleArg = ctx.ArgumentValue<JsonElement?>("filterRule");
+                var filterRule = filterRuleArg != null ? FilterRule.FromJson(filterRuleArg, ctx.Service<IAskyFieldMap<TType>>()) : null;
+                return await interactor.CountAsync(filterRule);
+            });
+
+        descriptor.Field($"{settings.Definition.Name.Camelize()}Any")
+            .Argument("filterRule", a => a.Type<AnyType>())
+            .Type<NonNullType<BooleanType>>()
+            .Resolve(async ctx =>
+            {
+                var interactor = ctx.Service<IActiveRecordInteractor<TType>>();
+                var filterRuleArg = ctx.ArgumentValue<JsonElement?>("filterRule");
+                var filterRule = filterRuleArg != null ? FilterRule.FromJson(filterRuleArg, ctx.Service<IAskyFieldMap<TType>>()) : null;
+                return await interactor.AnyAsync(filterRule);
             });
     }
 }

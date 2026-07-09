@@ -23,7 +23,7 @@ public class ActiveRecordServiceConfiguration
     private ActiveRecordServiceConfiguration(IServiceCollection services)
     {
         Services = services ?? throw new ArgumentNullException(nameof(services));
-        Services.TryAddTransient(typeof(IActiveRecordService<>), typeof(ActiveRecordService<>));
+        Services.TryAddTransient(typeof(IActiveRecordInteractor<>), typeof(ActiveRecordInteractor<>));
         Services.TryAddTransient(typeof(IActiveRecordAuthorizationService<>), typeof(ActiveRecordAuthorizationService<>));
     }
 

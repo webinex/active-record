@@ -1,143 +1,100 @@
 ﻿using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
-using Webinex.ActiveRecord.Annotations;
 using Webinex.Asky;
 
 namespace Webinex.ActiveRecord;
 
-internal class ActiveRecordRepository<T> : IActiveRecordRepository<T>, IActiveRecordServiceRepository<T>
+internal class ActiveRecordRepository<T> : IActiveRecordInteractorRepository<T>
     where T : class
 {
-    private readonly IServiceProvider _services;
     private readonly IActiveRecordDbContextProvider _dbContextProvider;
-    private readonly IAskyFieldMap<T>? _fieldMap;
     private readonly IActiveRecordSettings<T> _settings;
-    private readonly IActiveRecordAuthorizationService<T> _authorizationService;
 
     public ActiveRecordRepository(
         IActiveRecordDbContextProvider dbContextProvider,
         IActiveRecordSettings<T> settings,
-        IActiveRecordAuthorizationService<T> authorizationService,
-        IServiceProvider services,
         IAskyFieldMap<T>? fieldMap = null)
     {
         _dbContextProvider = dbContextProvider;
         _settings = settings;
-        _authorizationService = authorizationService;
-        _services = services;
-        _fieldMap = fieldMap;
+        FieldMap = fieldMap;
+    }
+
+    private ActiveRecordRepository(
+        ActiveRecordRepository<T> repository,
+        Expression<Func<T, bool>>? defaultPredicate)
+        : this(
+            repository._dbContextProvider,
+            repository._settings,
+            repository.FieldMap)
+    {
+        DefaultPredicate = defaultPredicate;
     }
 
     private DbContext DbContext => _dbContextProvider.Value;
 
     private IAskyFieldMap<T> FieldMap =>
-        _fieldMap ??
+        field ??
         throw new InvalidOperationException($"Field map for type {typeof(T).Name} not found in DI container.");
 
-    Task<IQueryable<T>> IActiveRecordRepository<T>.QueryableAsync(ActiveRecordQuery? query)
+    private Expression<Func<T, bool>>? DefaultPredicate { get; }
+
+
+    public async Task<ListSegment<T>> ListSegmentAsync(
+        Query? query = null,
+        bool includeTotal = true,
+        bool readOnly = false)
     {
-        return QueryableAsync(defaultPredicate: null, query);
-    }
+        var queryable = Queryable(query?.FilterRule, query?.SortRule);
 
-    async Task<IQueryable<T>> IActiveRecordServiceRepository<T>.QueryableAsync(ActiveRecordQuery? query)
-    {
-        var context = new ActionContext<T>(_services, ActionType.GetAll, _settings.Definition, null, null, null);
-        var defaultPredicate = await _authorizationService.ExpressionAsync(context);
-        var queryable = await QueryableAsync(defaultPredicate, query);
-        return queryable.AsNoTracking();
-    }
+        if (readOnly)
+            queryable = queryable.AsNoTracking();
 
-    async Task<IReadOnlyCollection<T>> IActiveRecordRepository<T>.QueryAsync(ActiveRecordQuery? query)
-    {
-        var queryable = await QueryableAsync(defaultPredicate: null, query);
-        return await queryable.ToArrayAsync();
-    }
+        if (query?.PagingRule == null)
+        {
+            var items = await queryable.ToArrayAsync();
+            return new ListSegment<T>(items, includeTotal ? items.Length : -1);
+        }
 
-    async Task<IReadOnlyCollection<T>> IActiveRecordServiceRepository<T>.QueryAsync(ActiveRecordQuery? query)
-    {
-        var context = new ActionContext<T>(_services, ActionType.GetAll, _settings.Definition, null, null, null);
-        var defaultPredicate = await _authorizationService.ExpressionAsync(context);
-        var queryable = await QueryableAsync(defaultPredicate, query);
-        return await queryable.AsNoTracking().ToArrayAsync();
-    }
+        var segment = await queryable.PageBy(query.PagingRule).ToArrayAsync();
 
-    private Task<IQueryable<T>> QueryableAsync(
-        Expression<Func<T, bool>>? defaultPredicate,
-        ActiveRecordQuery? query)
-    {
-        var queryable = DbContext.Set<T>().AsQueryable();
+        if (!includeTotal)
+            return new ListSegment<T>(segment, -1);
+        
+        if (segment.Length < query.PagingRule.Take)
+            return new ListSegment<T>(segment, query.PagingRule.Skip + segment.Length);
 
-        if (defaultPredicate != null)
-            queryable = queryable.Where(defaultPredicate);
-
-        if (query?.FilterRule != null)
-            queryable = queryable.Where(FieldMap, query.FilterRule);
-
-        if (query?.SortRules != null)
-            queryable = queryable.SortBy(FieldMap, query.SortRules);
-
-        if (query?.PagingRule != null)
-            queryable = queryable.PageBy(query.PagingRule);
-
-        return Task.FromResult(queryable);
+        var total = await queryable.CountAsync();
+        return new ListSegment<T>(segment, total);
     }
 
     public async Task<int> CountAsync(FilterRule? filterRule = null)
     {
-        var context = new ActionContext<T>(_services, ActionType.GetAll, _settings.Definition, null, null, null);
-        var defaultExpression = await _authorizationService.ExpressionAsync(context);
-        var queryable = await QueryableAsync(defaultExpression, new ActiveRecordQuery(filterRule));
-        return await queryable.CountAsync();
+        return await Queryable(filterRule).CountAsync();
     }
 
-    async Task<int> IActiveRecordRepository<T>.CountAsync(FilterRule? filterRule)
+    public async Task<bool> AnyAsync(FilterRule? filterRule = null)
     {
-        var query = new ActiveRecordQuery(filterRule: filterRule);
-        var queryable = await QueryableAsync(defaultPredicate: null, query: query);
-        return await queryable.CountAsync();
+        return await Queryable(filterRule).AnyAsync();
     }
 
-    async Task<IReadOnlyCollection<T>> IActiveRecordRepository<T>.ByKeysAsync<TId>(IEnumerable<TId> keys)
-    {
-        return await ByKeysAsync(defaultExpression: null, keys);
-    }
-
-    async Task<IReadOnlyCollection<T>> IActiveRecordServiceRepository<T>.ByKeysAsync<TId>(
-        IEnumerable<TId> keys)
-    {
-        var context = new ActionContext<T>(_services, ActionType.GetByKey, _settings.Definition, null, null, null);
-        var defaultExpression = await _authorizationService.ExpressionAsync(context);
-        return await ByKeysAsync(defaultExpression, keys);
-    }
-
-    private async Task<IReadOnlyCollection<T>> ByKeysAsync<TId>(
-        Expression<Func<T, bool>>? defaultExpression,
-        IEnumerable<TId> keys,
-        bool noTracking = false)
-        where TId : notnull
+    public async Task<IReadOnlyCollection<T>> ByKeysAsync<TKey>(
+        IEnumerable<TKey> keys,
+        bool readOnly)
+        where TKey : notnull
     {
         keys = keys?.Distinct().ToArray() ?? throw new ArgumentNullException(nameof(keys));
-        if (!keys.Any()) return Array.Empty<T>();
+        if (!keys.Any()) return [];
 
-        var queryable = DbContext.Set<T>().AsQueryable();
-
-        if (defaultExpression != null)
-            queryable = queryable.Where(defaultExpression);
+        var queryable = Queryable();
 
         var expression = ActiveRecordExpression.KeyIn<T>(_settings, keys.Cast<object>());
         queryable = queryable.Where(expression);
 
-        if (noTracking)
+        if (readOnly)
             queryable = queryable.AsNoTracking();
 
         return await queryable.ToArrayAsync();
-    }
-
-    async Task<IReadOnlyDictionary<TKey, T>> IActiveRecordRepository<T>.MapAsync<TKey>(IEnumerable<TKey> keys)
-    {
-        var values = await ByKeysAsync(defaultExpression: null, keys);
-        var getKey = ActiveRecordExpression.GetKey<T, TKey>(_settings).Compile();
-        return values.ToDictionary(x => getKey(x), x => x);
     }
 
     public virtual async Task<IReadOnlyCollection<T>> AddRangeAsync(IEnumerable<T> entities)
@@ -154,10 +111,30 @@ internal class ActiveRecordRepository<T> : IActiveRecordRepository<T>, IActiveRe
         return Task.CompletedTask;
     }
 
-    public async Task<bool> AnyAsync(FilterRule? filterRule = null)
+    public IActiveRecordInteractorRepository<T> WithDefaultPredicate(Expression<Func<T, bool>>? predicate)
     {
-        var query = new ActiveRecordQuery(filterRule: filterRule);
-        var queryable = await QueryableAsync(defaultPredicate: null, query: query);
-        return await queryable.AnyAsync();
+        return new ActiveRecordRepository<T>(this, predicate);
+    }
+
+    private IQueryable<T> Queryable(
+        FilterRule? filterRule = null,
+        IEnumerable<SortRule>? sortRules = null,
+        PagingRule? pagingRule = null)
+    {
+        var queryable = DbContext.Set<T>().AsQueryable();
+
+        if (DefaultPredicate != null)
+            queryable = queryable.Where(DefaultPredicate);
+
+        if (filterRule != null)
+            queryable = queryable.Where(FieldMap, filterRule);
+
+        if (sortRules != null)
+            queryable = queryable.SortBy(FieldMap, sortRules);
+
+        if (pagingRule != null)
+            queryable = queryable.PageBy(pagingRule);
+
+        return queryable;
     }
 }
